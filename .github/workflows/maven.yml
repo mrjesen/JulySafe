@@ -1,0 +1,43 @@
+name: Java CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Test with Java ${{ matrix.jdk }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        jdk: ['1.7', '1.8', '9', '10', '11', '12', '13', '14']
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK ${{ matrix.jdk }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.jdk }}
+      - name: Build with Maven # ideally do mvn verify but changes are needed first
+        run: |
+          mvn clean package
+          zip -r $GITHUB_WORKSPACE/test2.zip $GITHUB_WORKSPACE/
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/test2.zip
+          asset_name: test_upload.zip
+          asset_content_type: application/zip
