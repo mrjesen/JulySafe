@@ -16,9 +16,14 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.jdk }}
+      
       - name: Build with Maven # ideally do mvn verify but changes are needed first
-        run: mvn clean package
-      - name: zip-jar
+        run: |
+          git clone --depth=1 https://github.com/julyss2019/JulyLibrary.git /tmp/J
+          cd /tmp/J && mvn clean package && mv ./target/*.jar /tmp/lib.jar
+          mvn install:install-file -Dfile=/tmp/lib.jar -DgroupId=com.github.julyss2019.bukkit.plugins -DartifactId=JulyLibrary -Dversion=2.4.4 -Dpackaging=jar
+          mvn clean package
+      - name: zipjar
         run: zip -r $GITHUB_WORKSPACE/test2.zip $GITHUB_WORKSPACE/target/*.jar
       - name: Create Release
         id: create_release
